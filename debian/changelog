@@ -1,0 +1,11 @@
+wwyate-modules (0.1ubuntu1) precise; urgency=low
+
+  * Added libtiff-tools dependency
+
+ -- WhiteWind <whitearchey@gmail.com>  Mon, 01 Oct 2012 15:18:30 +0900
+
+wwyate-modules (0.1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- WhiteWind <whitearchey@gmail.com>  Thu, 30 Aug 2012 11:32:11 +0900

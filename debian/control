@@ -1,0 +1,15 @@
+Source: wwyate-modules
+Priority: optional
+Maintainer: WhiteWind <whitearchey@gmail.com>
+Build-Depends: debhelper (>= 8.0.0), cmake, yate-dev
+Standards-Version: 3.9.2
+Section: libs
+Homepage: <insert the upstream URL, if relevant>
+
+Package: wwyate-modules
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libtiff-tools
+Description: WhiteWind's modules for Yate (fax2email, forwarder)
+ WhiteWind's modules for YATE (Yet Another Telephony Engine)
+ Contains modules fax2email and forwarder

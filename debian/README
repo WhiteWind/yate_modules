@@ -1,0 +1,7 @@
+The Debian Package wwyate-modules
+----------------------------
+
+Modules for YetAnotherTelephonyEngine.
+For now it includes forward and fax2email modules
+
+ -- WhiteWind <whitearchey@gmail.com>  Thu, 30 Aug 2012 11:32:11 +0900
