@@ -51,23 +51,23 @@ public:
     }
 
     virtual void* getObject(const String& name) const {
-	if (name == "Fax2EmailRec")
-  	    return (void*)this;
-	return NamedString::getObject(name);
+        if (name == "Fax2EmailRec")
+            return (void*)this;
+        return NamedString::getObject(name);
     }
 
     inline String& getEmail() {
-	return m_email;
+        return m_email;
     }
 
     inline String& getFrom() {
-	return m_from;
+        return m_from;
     }
     
     inline RefObject* getUserData() {
         return m_userData;
     }
-	
+        
 private:
     String m_email;
     String m_from;
@@ -84,9 +84,9 @@ public:
     inline int ref() { return ++m_counter; };
     inline int unref() { return --m_counter; };
     virtual void* getObject(const String& name) const {
-	if (name == "FaxLimit")
-  	    return (void*)this;
-	return String::getObject(name);
+        if (name == "FaxLimit")
+              return (void*)this;
+        return String::getObject(name);
     }
 private:
     int m_counter;
@@ -137,17 +137,17 @@ String encodeString(const String input)
     String res;
     i = 0;
     while (i < input.length()) {
-	in[i % 3] = input[i];
-	if ((++i) % 3 == 0) {
-	    encodeblock(reinterpret_cast<unsigned char*>(in), reinterpret_cast<unsigned char*>(out), 3);
-	    for (int n = 0; n<4; n++)
-		res << out[n];
-	}
+        in[i % 3] = input[i];
+        if ((++i) % 3 == 0) {
+            encodeblock(reinterpret_cast<unsigned char*>(in), reinterpret_cast<unsigned char*>(out), 3);
+            for (int n = 0; n<4; n++)
+                res << out[n];
+        }
     }
     if (i % 3) {
-	encodeblock(reinterpret_cast<unsigned char*>(in), reinterpret_cast<unsigned char*>(out), i % 3);
-	for (int n = 0; n<4; n++)
-	    res << out[n];
+        encodeblock(reinterpret_cast<unsigned char*>(in), reinterpret_cast<unsigned char*>(out), i % 3);
+        for (int n = 0; n<4; n++)
+            res << out[n];
     }
     return res;
 }
@@ -161,28 +161,25 @@ String encodeData(unsigned char* input, int len)
     i = 0;
     line_len = 0;
     while (i < len) {
-	in[i % 3] = input[i];
-	if ((++i) % 3 == 0) {
-	    encodeblock(in, reinterpret_cast<unsigned char*>(out), 3);
-	    for (int n = 0; n<4; n++)
-		res << out[n];
-	    line_len += 4;
-	    if (line_len >= 80) {
-		res << "\n";
-		line_len = 0;
-	    }
-	}
+        in[i % 3] = input[i];
+        if ((++i) % 3 == 0) {
+            encodeblock(in, reinterpret_cast<unsigned char*>(out), 3);
+            for (int n = 0; n<4; n++)
+                res << out[n];
+            line_len += 4;
+            if (line_len >= 80) {
+                res << "\n";
+                line_len = 0;
+            }
+        }
     }
     if (i % 3) {
-	encodeblock(in, reinterpret_cast<unsigned char*>(out), i % 3);
-	for (int n = 0; n<4; n++)
-	    res << out[n];
+        encodeblock(in, reinterpret_cast<unsigned char*>(out), i % 3);
+        for (int n = 0; n<4; n++)
+            res << out[n];
     }
     return res;
 }
-
-
-
 
 // copy parameters from SQL result to a NamedList
 static void copyParams(NamedList& lst, Array* a)
@@ -221,82 +218,54 @@ void Fax2EmailModule::send_email(const char* to, const char* from, const char* s
     char* tmp = (char*)malloc(1024);
     snprintf(tmp, 1024, "%s.letter", attach);
     FILE* handle = popen("sendmail -ti", "w");
-    //FILE* handle1 = fopen(tmp, "w");
 
     snprintf(tmp, 1024, "To: %s\nFrom: %s\nSubject: %s\nMIME-Version: 1.0\nContent-Type: multipart/mixed; boundary=\"%s\"\nContent-Disposition: inline\n\n",
-	to, from, subject, boundary.c_str());
+        to, from, subject, boundary.c_str());
     fwrite(tmp, strlen(tmp), 1, handle);
-    //fwrite(tmp, strlen(tmp), 1, handle1);
     
     snprintf(tmp, 1024, "\n--%s\nContent-Type: text/plain; charset=us-ascii\nContent-Disposition: inline\n\n", boundary.c_str());
     fwrite(tmp, strlen(tmp), 1, handle);
     fwrite(body, 1, strlen(body), handle);
-    //fwrite(tmp, strlen(tmp), 1, handle1);
-    //fwrite(body, 1, strlen(body), handle1);
 
     time_t t;
     struct tm *tim;
-	
+        
     t = time(NULL);
     tim = localtime(&t);
     char* prefix = (char*)malloc(255);
     if (!strftime(prefix, 255, "fax%Y-%m-%d_%H-%M-%S", tim))
-	prefix = "Error-in-strftime";
-
-    //char* filename = (char*)malloc(1024);
-    snprintf(tmp, 1024, "/usr/bin/tiff2pdf -o %1$s.pdf %1$s", attach);
-    Debug(&__plugin, DebugInfo, "Running: %s", tmp);
-    /*int status = system(tmp);
-    if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
-	Debug(&__plugin, DebugInfo, "Conversion to PDF Succeed! %d", status);
-	snprintf(filename, 1024, "%s.pdf", attach);
-	snprintf(tmp, 1024, "\n--%s\nContent-Type: application/pdf\nContent-Disposition: attachment; filename=\"%s.pdf\"\nContent-Transfer-Encoding: base64\n\n", 
-	    boundary.c_str(), prefix);
-    } else {
-        Debug(&__plugin, DebugInfo, "Conversion to PDF Failed! %d", status);
-	snprintf(filename, 1024, "%s", attach);
-	snprintf(tmp, 1024, "\n--%s\nContent-Type: image/tiff\nContent-Disposition: attachment; filename=\"%s.tiff\"\nContent-Transfer-Encoding: base64\n\n", 
-            boundary.c_str(), prefix);
-    }/**/
+        prefix = "Error-in-strftime";
 
     snprintf(tmp, 1024, "\n--%s\nContent-Type: application/pdf\nContent-Disposition: attachment; filename=\"%s.pdf\"\nContent-Transfer-Encoding: base64\n\n", 
         boundary.c_str(), prefix);
     fwrite(tmp, strlen(tmp), 1, handle);
-    //fwrite(tmp, strlen(tmp), 1, handle1);
     free(prefix);
 
     snprintf(tmp, 1024, "/usr/bin/tiff2pdf %s", attach);
     Debug(&__plugin, DebugInfo, "Running: %s", tmp);
     FILE* attach_file = popen(tmp, "r");
-    //FILE* attach_file = fopen(filename, "r");
     size_t read_size;
     String attach_body;
     unsigned char buf[1023];
     while (1023 == (read_size = fread(buf, 1, 1023, attach_file))) {
-	attach_body << encodeData(buf, read_size);
+        attach_body << encodeData(buf, read_size);
     }
     if (read_size)
-	attach_body << encodeData(buf, read_size);
+        attach_body << encodeData(buf, read_size);
     pclose(attach_file);
-    //fclose(attach_file);
     fwrite(attach_body.c_str(), 1, attach_body.length(), handle);
     
     snprintf(tmp, 1024, "\n\n--%s--", boundary.c_str());
     fwrite(tmp, strlen(tmp), 1, handle);
-    //fwrite(tmp, strlen(tmp), 1, handle1);
     free(tmp);
     
     pclose(handle);
-    //fclose(handle1);
-    
-    //unlink(filename);
-    //free(filename);
 }
 
 bool Fax2EmailModule::unload()
 {
     if (!lock(500000))
-	return false;
+        return false;
     uninstallRelays();
     unlock();
     return true;
@@ -312,19 +281,19 @@ bool Fax2EmailModule::msgRoute(Message& msg)
     db.addParam("query", query);
     db.addParam("account", m_account);
     if (!Engine::dispatch(db) || db.getIntValue("rows") < 1) {
-	const char* error = db.getValue("error","failure");
-	Debug(&__plugin, DebugWarn, "Could not fetch db data. Error:  '%s'", error);
-	return false;
+        const char* error = db.getValue("error","failure");
+        Debug(&__plugin, DebugWarn, "Could not fetch db data. Error:  '%s'", error);
+        return false;
     }
     Array *result = static_cast<Array*>(db.userObject("Array"));
     if (!result) {
-	Debug(&__plugin, DebugWarn, "Result array is NULL");
-	return false;
+        Debug(&__plugin, DebugWarn, "Result array is NULL");
+        return false;
     }
     
     if (result->getRows() <= 1 || result->getColumns() < 2) {
-	Debug(&__plugin, DebugInfo, "Result array is empty");
-	return false;
+        Debug(&__plugin, DebugInfo, "Result array is empty");
+        return false;
     }
 
     NamedList lst("templist");
@@ -332,7 +301,6 @@ bool Fax2EmailModule::msgRoute(Message& msg)
     String dbg;
     lst.dump(dbg, ":", '"', true);
 
-    //String email = result->get(1,1)->toString();
     Lock lock(this);
     int limit = result->get(2,1)->toString().toInteger(1);
     GenObject * ptr = m_limit[called];
@@ -340,18 +308,18 @@ bool Fax2EmailModule::msgRoute(Message& msg)
     if (ptr) 
       limObj = static_cast<FaxLimit*>(ptr->getObject("FaxLimit"));
     if (!limObj) {
-	limObj = new FaxLimit(called);
-	m_limit.append(limObj);
+        limObj = new FaxLimit(called);
+        m_limit.append(limObj);
     }
     if (limObj->ref() > limit) {
-	if (limObj->unref() <= 0)
-	    m_limit.remove(limObj, true);
-	Debug(&__plugin, DebugMild, "Rejected call %s to %s to fax (%s): limit of %d calls exceeded", msg.getValue("id"), 
+        if (limObj->unref() <= 0)
+            m_limit.remove(limObj, true);
+        Debug(&__plugin, DebugMild, "Rejected call %s to %s to fax (%s): limit of %d calls exceeded", msg.getValue("id"), 
                   called, result->get(1,1)->toString().c_str(), limit);
-	msg.setParam("error", "busy");
-	msg.setParam("reason", "Busy there");
-	msg.retValue() = "-";
-	return true;	
+        msg.setParam("error", "busy");
+        msg.setParam("reason", "Busy there");
+        msg.retValue() = "-";
+        return true;
     }
     lock.drop();
     
@@ -359,7 +327,7 @@ bool Fax2EmailModule::msgRoute(Message& msg)
     m_hash.append(new Fax2EmailRec(msg.getValue("id"),
                                  result->get(0, 1)->toString(),
                                  result->get(1, 1)->toString(),
-				 msg.getValue("caller"),
+                                 msg.getValue("caller"),
                                  data));
     
     
@@ -370,76 +338,6 @@ bool Fax2EmailModule::msgRoute(Message& msg)
                   msg.getValue("called"), msg.retValue().c_str(), result->get(1,1)->toString().c_str(), m_hash.count(), dbg.c_str());    
     free(tempFile);
     return true;
-    /*String callto = msg.getValue("callto");
-    if (callto.null())
-	return false;
-    String tmp = callto;
-    Lock lock(this);
-    if (!callto.startSkip(m_prefix,false))
-	return false;
-    int sep = callto.find("/");
-    if (sep < 0)
-	return false;
-    String node = callto.substr(0,sep).trimBlanks();
-    callto = callto.substr(sep+1);
-    if (callto.trimBlanks().null())
-	return false;
-    DDebug(&__plugin,DebugAll,"Call to '%s' on node '%s'",callto.c_str(),node.c_str());
-    // check if the node is to be dynamically allocated
-    if ((node == "*") && m_message) {
-	Message m(m_message);
-	m.addParam("allocate",String::boolText(true));
-	m.addParam("nodename",Engine::nodeName());
-	m.addParam("callto",callto);
-	const char* param = msg.getValue("billid");
-	if (param)
-	    m.addParam("billid",param);
-	param = msg.getValue("username");
-	    m.addParam("username",param);
-	if (!Engine::dispatch(m) || (m.retValue() == "-") || (m.retValue() == "error")) {
-	    const char* error = m.getValue("error","failure");
-	    const char* reason = m.getValue("reason");
-	    Debug(&__plugin,DebugWarn,"Could not get node for '%s'%s%s%s%s",
-		callto.c_str(),
-		(error ? ": " : ""), c_safe(error),
-		(reason ? ": " : ""), c_safe(reason));
-	    if (error)
-		msg.setParam("error",error);
-	    else
-		msg.clearParam("error");
-	    if (reason)
-		msg.setParam("reason",reason);
-	    else
-		msg.clearParam("reason");
-	    return false;
-	}
-	node = m.retValue();
-	Debug(&__plugin,DebugInfo,"Using node '%s' for '%s'",
-	    node.c_str(),callto.c_str());
-    }
-    msg.setParam("callto",callto);
-    // if the call is for the local node just let it through
-    if (node.null() || (Engine::nodeName() == node))
-	return false;
-    if (!node.matches(m_regexp)) {
-	msg.setParam("callto",tmp);
-	return false;
-    }
-    String dest = node.replaceMatches(m_callto);
-    lock.drop();
-    msg.replaceParams(dest);
-    if (dest.trimBlanks().null()) {
-	msg.setParam("callto",tmp);
-	return false;
-    }
-    Debug(&__plugin,DebugNote,"Call to '%s' on node '%s' goes to '%s'",
-	callto.c_str(),node.c_str(),dest.c_str());
-    msg.setParam("callto",dest);
-    msg.setParam("osip_x-callto",callto);
-    msg.setParam("osip_x-billid",msg.getValue("billid"));
-    msg.setParam("osip_x-nodename",Engine::nodeName());
-    msg.setParam("osip_x-username",msg.getValue("username"));
-    return false;*/
 }
 
 
@@ -466,21 +364,21 @@ bool Fax2EmailModule::msgHangup(Message &msg)
     else
       limObj = static_cast<FaxLimit*>(obj->getObject("FaxLimit"));
     if (limObj) {
-	if (limObj->unref() <= 0)
-	    m_limit.remove(limObj, true);
+        if (limObj->unref() <= 0)
+            m_limit.remove(limObj, true);
     }
     m_hash.remove(rec, true);
     lock.drop();
     if (msg.getParam("faxpages")) {
-	String subject("Fax from ");
-	subject << caller.c_str() << " (" << msg.getValue("faxident_remote") << "), " << msg.getValue("faxpages") << " pages, received by " << called.c_str();
-	String body("Faxtype: ");
-	body << msg.getValue("faxtype") << "\nFaxECM: " << msg.getValue("faxecm") << "\nFaxCaller: " << msg.getValue("faxcaller");
-	send_email(email.c_str(), m_emailFrom.c_str(), subject.c_str(), body.c_str(), attach);
-	unlink(attach);
-	Debug(&__plugin, DebugMild, "Sent fax from %s to %s. Filename: %s", caller.c_str(), email.c_str(), attach.c_str());
+        String subject("Fax from ");
+        subject << caller.c_str() << " (" << msg.getValue("faxident_remote") << "), " << msg.getValue("faxpages") << " pages, received by " << called.c_str();
+        String body("Faxtype: ");
+        body << msg.getValue("faxtype") << "\nFaxECM: " << msg.getValue("faxecm") << "\nFaxCaller: " << msg.getValue("faxcaller");
+        send_email(email.c_str(), m_emailFrom.c_str(), subject.c_str(), body.c_str(), attach);
+        unlink(attach);
+        Debug(&__plugin, DebugMild, "Sent fax from %s to %s. Filename: %s", caller.c_str(), email.c_str(), attach.c_str());
     } else
-	Debug(&__plugin, DebugWarn, "Fax from %s has zero pages. File: %s, email: %s", caller.c_str(), attach.c_str(), email.c_str());
+        Debug(&__plugin, DebugWarn, "Fax from %s has zero pages. File: %s, email: %s", caller.c_str(), attach.c_str(), email.c_str());
     Debug(&__plugin, DebugMild, "Deleted call %s. %d/%d calls remaining", id.c_str(), m_hash.count(), m_limit.count());
     return false;
 }
@@ -488,12 +386,12 @@ bool Fax2EmailModule::msgHangup(Message &msg)
 bool Fax2EmailModule::received(Message& msg, int id)
 {
     switch (id) {
-	case CallRoute:
-	    return msgRoute(msg);
-	case ChanHangup:
-	    return msgHangup(msg);
-	default:
-	    return Module::received(msg,id);
+        case CallRoute:
+            return msgRoute(msg);
+        case ChanHangup:
+            return msgHangup(msg);
+        default:
+            return Module::received(msg,id);
     }
 }
 
@@ -518,12 +416,6 @@ void Fax2EmailModule::initialize()
     m_emailFrom = cfg.getValue("general", "emailFrom", "fax@localhost");
     m_callRoutePrio = cfg.getIntValue("priorities", "call.route", 10);
     m_chanHangupPrio = cfg.getIntValue("priorities", "chan.hangup", 10);
-    //m_prefix = cfg.getValue("general","prefix","cluster");
-    //m_regexp = cfg.getValue("general","regexp");
-    //m_callto = cfg.getValue("general","callto");
-    //m_message = cfg.getValue("general","locate","cluster.locate");
-    //m_handleReg = cfg.getBoolValue("general","user.register",true);
-    //m_handleCdr = cfg.getBoolValue("general","call.cdr",true);
     unlock();
     if (!m_init) {
         setup();

@@ -41,9 +41,9 @@ public:
     }
 
     virtual void* getObject(const String& name) const {
-	if (name == "ForwardRec")
-  	    return (void*)this;
-	return NamedString::getObject(name);
+        if (name == "ForwardRec")
+            return (void*)this;
+        return NamedString::getObject(name);
     }
 
     inline String& getForwardTo() {
@@ -51,13 +51,13 @@ public:
     }
 
     inline String& getDelay() {
-	return m_delay;
+        return m_delay;
     }
 
     inline RefObject* getUserData() {
         return m_userData;
     }
-	
+        
 private:
     String m_forwardTo;
     String m_delay;
@@ -117,7 +117,7 @@ UNLOAD_PLUGIN(unloadNow)
 bool ForwarderModule::unload()
 {
     if (!lock(500000))
-	return false;
+        return false;
     uninstallRelays();
     unlock();
     return true;
@@ -132,18 +132,18 @@ bool ForwarderModule::msgExecute(Message& msg)
     db.addParam("query", query);
     db.addParam("account", m_account);
     if (!Engine::dispatch(db) || db.getIntValue("rows") < 1) {
-	const char* error = db.getValue("error","failure");
-	Debug(&__plugin, DebugWarn, "Could not fetch db data. Error:  '%s'", error);
-	return false;
+        const char* error = db.getValue("error","failure");
+        Debug(&__plugin, DebugWarn, "Could not fetch db data. Error:  '%s'", error);
+        return false;
     }
     Array *result = static_cast<Array*>(db.userObject("Array"));
     if (!result) {
-	Debug(&__plugin, DebugWarn, "Result array is NULL");
-	return false;
+        Debug(&__plugin, DebugWarn, "Result array is NULL");
+        return false;
     }
     
     if (result->getRows() <= 1 || result->getColumns() < 3) {
-	Debug(&__plugin, DebugInfo, "Result array is empty");
+        Debug(&__plugin, DebugInfo, "Result array is empty");
     }
 
     NamedList lst("templist");
@@ -161,76 +161,6 @@ bool ForwarderModule::msgExecute(Message& msg)
     Debug(&__plugin, DebugMild, "Added call %s with delay %s. %d calls in list. Result set: %s", msg.getValue("id"), delay.c_str(), m_hash.count(), dbg.c_str());
     msg.setParam("maxcall", delay);
     return false;
-    /*String callto = msg.getValue("callto");
-    if (callto.null())
-	return false;
-    String tmp = callto;
-    Lock lock(this);
-    if (!callto.startSkip(m_prefix,false))
-	return false;
-    int sep = callto.find("/");
-    if (sep < 0)
-	return false;
-    String node = callto.substr(0,sep).trimBlanks();
-    callto = callto.substr(sep+1);
-    if (callto.trimBlanks().null())
-	return false;
-    DDebug(&__plugin,DebugAll,"Call to '%s' on node '%s'",callto.c_str(),node.c_str());
-    // check if the node is to be dynamically allocated
-    if ((node == "*") && m_message) {
-	Message m(m_message);
-	m.addParam("allocate",String::boolText(true));
-	m.addParam("nodename",Engine::nodeName());
-	m.addParam("callto",callto);
-	const char* param = msg.getValue("billid");
-	if (param)
-	    m.addParam("billid",param);
-	param = msg.getValue("username");
-	    m.addParam("username",param);
-	if (!Engine::dispatch(m) || (m.retValue() == "-") || (m.retValue() == "error")) {
-	    const char* error = m.getValue("error","failure");
-	    const char* reason = m.getValue("reason");
-	    Debug(&__plugin,DebugWarn,"Could not get node for '%s'%s%s%s%s",
-		callto.c_str(),
-		(error ? ": " : ""), c_safe(error),
-		(reason ? ": " : ""), c_safe(reason));
-	    if (error)
-		msg.setParam("error",error);
-	    else
-		msg.clearParam("error");
-	    if (reason)
-		msg.setParam("reason",reason);
-	    else
-		msg.clearParam("reason");
-	    return false;
-	}
-	node = m.retValue();
-	Debug(&__plugin,DebugInfo,"Using node '%s' for '%s'",
-	    node.c_str(),callto.c_str());
-    }
-    msg.setParam("callto",callto);
-    // if the call is for the local node just let it through
-    if (node.null() || (Engine::nodeName() == node))
-	return false;
-    if (!node.matches(m_regexp)) {
-	msg.setParam("callto",tmp);
-	return false;
-    }
-    String dest = node.replaceMatches(m_callto);
-    lock.drop();
-    msg.replaceParams(dest);
-    if (dest.trimBlanks().null()) {
-	msg.setParam("callto",tmp);
-	return false;
-    }
-    Debug(&__plugin,DebugNote,"Call to '%s' on node '%s' goes to '%s'",
-	callto.c_str(),node.c_str(),dest.c_str());
-    msg.setParam("callto",dest);
-    msg.setParam("osip_x-callto",callto);
-    msg.setParam("osip_x-billid",msg.getValue("billid"));
-    msg.setParam("osip_x-nodename",Engine::nodeName());
-    msg.setParam("osip_x-username",msg.getValue("username"));
-    return false;*/
 }
 
 bool ForwarderModule::msgDisconnected(Message& msg)
@@ -300,14 +230,14 @@ bool ForwarderModule::msgAnswered(Message &msg)
 bool ForwarderModule::received(Message& msg, int id)
 {
     switch (id) {
-	case CallExecute:
-	    return msgExecute(msg);
-	case ChanDisconnected:
-	    return msgDisconnected(msg);
+        case CallExecute:
+            return msgExecute(msg);
+        case ChanDisconnected:
+            return msgDisconnected(msg);
         case CallAnswered:
             return msgAnswered(msg);
-	default:
-	    return Module::received(msg,id);
+        default:
+            return Module::received(msg,id);
     }
 }
 
@@ -329,12 +259,6 @@ void ForwarderModule::initialize()
     Configuration cfg(Engine::configFile("forwarder"));
     lock();
     m_account = cfg.getValue("general","account");
-    //m_prefix = cfg.getValue("general","prefix","cluster");
-    //m_regexp = cfg.getValue("general","regexp");
-    //m_callto = cfg.getValue("general","callto");
-    //m_message = cfg.getValue("general","locate","cluster.locate");
-    //m_handleReg = cfg.getBoolValue("general","user.register",true);
-    //m_handleCdr = cfg.getBoolValue("general","call.cdr",true);
     unlock();
     if (!m_init) {
         setup();
