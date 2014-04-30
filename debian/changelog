@@ -1,3 +1,9 @@
+wwyate-modules (0.2) precise; urgency=low
+
+  * Forwarder module now reads query from config
+
+ -- WhiteWind <whitearchey@gmail.com>  Wed, 30 Apr 2014 11:58:48 +0900
+
 wwyate-modules (0.1ubuntu1) precise; urgency=low
 
   * Added libtiff-tools dependency

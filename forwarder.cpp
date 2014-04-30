@@ -84,6 +84,10 @@ private:
     bool m_init;
     HashList m_hash;
     String m_account;
+    String m_get_query;
+    int m_disconnected_pri;
+    int m_answered_pri;
+    int m_execute_pri;
 };
 
 // copy parameters from SQL result to a NamedList
@@ -126,9 +130,11 @@ bool ForwarderModule::unload()
 bool ForwarderModule::msgExecute(Message& msg)
 {
     Message db("database");
-    String query = "SELECT * FROM forwarder WHERE sourceNumber = '";
-    query += msg.getValue("called");
-    query += "'";
+    String query(m_get_query);
+    msg.replaceParams(query, true);
+    // "SELECT * FROM forwarder WHERE sourceNumber = '";
+    //query += msg.getValue("called");
+    //query += "'";
     db.addParam("query", query);
     db.addParam("account", m_account);
     if (!Engine::dispatch(db) || db.getIntValue("rows") < 1) {
@@ -259,12 +265,16 @@ void ForwarderModule::initialize()
     Configuration cfg(Engine::configFile("forwarder"));
     lock();
     m_account = cfg.getValue("general","account");
+    m_get_query = cfg.getValue("general","query");
+    m_disconnected_pri =  cfg.getIntValue("priorities","chan.disconnected", 1, 0, 100, true);
+    m_execute_pri = cfg.getIntValue("priorities","call.execute", 10, 0, 100, true);
+    m_answered_pri = cfg.getIntValue("priorities","call.answered", 10, 0, 100, true);
     unlock();
-    if (!m_init) {
+    if (!m_init && !m_account.null() && !m_get_query.null()) {
         setup();
-        installRelay(ChanDisconnected, "chan.disconnected", 1);
-        installRelay(CallExecute, "call.execute", 10);
-        installRelay(CallAnswered, "call.answered", 10);
+        installRelay(ChanDisconnected, "chan.disconnected", m_disconnected_pri);
+        installRelay(CallExecute, "call.execute", m_execute_pri);
+        installRelay(CallAnswered, "call.answered", m_answered_pri);
         m_init = true;
     }
 }

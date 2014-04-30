@@ -417,7 +417,7 @@ void Fax2EmailModule::initialize()
     m_callRoutePrio = cfg.getIntValue("priorities", "call.route", 10);
     m_chanHangupPrio = cfg.getIntValue("priorities", "chan.hangup", 10);
     unlock();
-    if (!m_init) {
+    if (!m_init && !m_account.null()) {
         setup();
         installRelay(CallRoute, "call.route", m_callRoutePrio);
         installRelay(ChanHangup, "chan.hangup", m_chanHangupPrio);

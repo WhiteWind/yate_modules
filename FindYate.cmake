@@ -1,6 +1,6 @@
 find_package(PkgConfig)
 
-pkg_check_modules(PC_YATE yate)
+pkg_check_modules(PC_YATE REQUIRED yate)
 set(YATE_DEFINITIONS ${PC_YATE_CFLAGS_OTHER})
 
 find_path(YATE_INCLUDE_DIR yatengine.h
